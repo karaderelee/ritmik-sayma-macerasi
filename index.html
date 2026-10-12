@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Ritmik Sayma Macerası — Sayıları öğren, yıldızları topla, bayrağa ulaş!</title>
+  <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+  <div id="app-wrapper">
+    <!-- Phaser 3 Canvas Container -->
+    <div id="game-container"></div>
+
+    <!-- Top Floating Quick Bar (Always accessible for Audio & Reduced Motion) -->
+    <div id="top-utility-bar" class="utility-bar">
+      <button id="btn-toggle-sound" class="pill-btn utility-btn" title="Sesi Aç / Kapat" aria-label="Sesi Aç veya Kapat">
+        <span id="sound-icon" class="icon-svg">🔊</span>
+        <span id="sound-label">Ses: Açık</span>
+      </button>
+      <button id="btn-toggle-music" class="pill-btn utility-btn" title="Müziği Aç / Kapat" aria-label="Müziği Aç veya Kapat">
+        <span id="music-icon" class="icon-svg">🎵</span>
+        <span id="music-label">Müzik: Açık</span>
+      </button>
+      <button id="btn-toggle-motion" class="pill-btn utility-btn" title="Azaltılmış Hareket Modu" aria-label="Azaltılmış Hareket Modu">
+        <span id="motion-label">Efektler: Normal</span>
+      </button>
+    </div>
+
+    <!-- UI Overlay Root for Menus, HUD, Dashboard, and Modals -->
+    <div id="ui-layer"></div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
