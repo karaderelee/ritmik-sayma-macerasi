@@ -33,6 +33,7 @@ export class UIManager {
     const btnSound = document.getElementById('btn-toggle-sound');
     const btnMusic = document.getElementById('btn-toggle-music');
     const btnMotion = document.getElementById('btn-toggle-motion');
+    const btnFullscreen = document.getElementById('btn-toggle-fullscreen');
 
     this.refreshUtilityBarLabels();
 
@@ -57,6 +58,36 @@ export class UIManager {
       this.applyReducedMotionClass();
       this.refreshUtilityBarLabels();
     });
+
+    btnFullscreen?.addEventListener('click', () => {
+      btnFullscreen.blur();
+      audioManager.playClick();
+      this.toggleFullscreen();
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      this.refreshUtilityBarLabels();
+    });
+  }
+
+  toggleFullscreen() {
+    const docEl = document.documentElement;
+    const isFull = Boolean(
+      document.fullscreenElement || document.webkitFullscreenElement
+    );
+    if (!isFull) {
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => {});
+      } else if (docEl.webkitRequestFullscreen) {
+        docEl.webkitRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    }
   }
 
   applyReducedMotionClass() {
@@ -91,6 +122,13 @@ export class UIManager {
       motionLabel.textContent = s.reducedMotion
         ? 'Efektler: Azaltılmış'
         : 'Efektler: Normal';
+    }
+    const fsLabel = document.getElementById('fullscreen-label');
+    if (fsLabel) {
+      const isFull = Boolean(
+        document.fullscreenElement || document.webkitFullscreenElement
+      );
+      fsLabel.textContent = isFull ? '✕ Küçült' : '⛶ Tam Ekran';
     }
   }
 
@@ -816,87 +854,97 @@ export class UIManager {
   }
 
   /**
-   * Binds pointer and touch events for the Interactive Whiteboard (Etkileşimli Tahta)
-   * bottom control buttons so students can tap or hold to move, jump, and hover in air.
+   * Binds multi-touch (for mobile phones & tablets) and pointer events (for Interactive Whiteboards & mouse)
+   * on the bottom control buttons so players can hold, slide between buttons, or use two thumbs simultaneously.
    */
   bindSmartboardTouchControls() {
-    const bindHoldButton = (btnId, onDown, onUp) => {
+    const dock = document.getElementById('smartboard-controls');
+    if (!dock) return;
+
+    const btnMap = {
+      'btn-touch-left': { left: true },
+      'btn-touch-right': { right: true },
+      'btn-touch-jump': { up: true },
+      'btn-touch-jump-left': { left: true, up: true },
+      'btn-touch-jump-right': { right: true, up: true }
+    };
+
+    const pointerPressedIds = new Set();
+
+    const syncVirtualInputFromActiveButtons = (activeBtnIds) => {
+      let nextLeft = false;
+      let nextRight = false;
+      let nextUp = false;
+
+      Object.keys(btnMap).forEach((id) => {
+        const el = document.getElementById(id);
+        const isActive = activeBtnIds.has(id);
+        if (el) {
+          el.classList.toggle('pressed', isActive);
+        }
+        if (isActive) {
+          if (btnMap[id].left) nextLeft = true;
+          if (btnMap[id].right) nextRight = true;
+          if (btnMap[id].up) nextUp = true;
+        }
+      });
+
+      virtualInput.left = nextLeft;
+      virtualInput.right = nextRight;
+      virtualInput.up = nextUp;
+    };
+
+    // 1. Multi-touch handler (iOS / Android phones & tablets: supports two thumbs + sliding thumb across buttons)
+    const handleTouchEvent = (e) => {
+      if (e.cancelable) e.preventDefault();
+      audioManager.ensureContext();
+
+      const touchedIds = new Set(pointerPressedIds);
+      for (let i = 0; i < e.touches.length; i++) {
+        const t = e.touches[i];
+        const target = document
+          .elementFromPoint(t.clientX, t.clientY)
+          ?.closest('.touch-ctrl-btn');
+        if (target && target.id && btnMap[target.id]) {
+          touchedIds.add(target.id);
+        }
+      }
+      syncVirtualInputFromActiveButtons(touchedIds);
+    };
+
+    dock.addEventListener('touchstart', handleTouchEvent, { passive: false });
+    dock.addEventListener('touchmove', handleTouchEvent, { passive: false });
+    dock.addEventListener('touchend', handleTouchEvent, { passive: false });
+    dock.addEventListener('touchcancel', handleTouchEvent, { passive: false });
+    dock.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    // 2. Pointer Events handler (Interactive Whiteboards, Stylus, Desktop Mouse, and Automated Tests)
+    Object.keys(btnMap).forEach((btnId) => {
       const btn = document.getElementById(btnId);
       if (!btn) return;
 
       const startHold = (e) => {
+        if (e.pointerType === 'touch') return; // Handled by multi-touch listener above
         e.preventDefault();
         btn.blur();
         audioManager.ensureContext();
-        btn.classList.add('pressed');
-        onDown();
+        pointerPressedIds.add(btnId);
+        syncVirtualInputFromActiveButtons(pointerPressedIds);
       };
 
       const endHold = (e) => {
+        if (e.pointerType === 'touch') return;
         e.preventDefault();
-        btn.classList.remove('pressed');
-        onUp();
+        pointerPressedIds.delete(btnId);
+        syncVirtualInputFromActiveButtons(pointerPressedIds);
       };
 
       btn.addEventListener('pointerdown', startHold);
       btn.addEventListener('pointerup', endHold);
       btn.addEventListener('pointerleave', endHold);
       btn.addEventListener('pointercancel', endHold);
-    };
-
-    bindHoldButton(
-      'btn-touch-left',
-      () => {
-        virtualInput.left = true;
-      },
-      () => {
-        virtualInput.left = false;
-      }
-    );
-
-    bindHoldButton(
-      'btn-touch-right',
-      () => {
-        virtualInput.right = true;
-      },
-      () => {
-        virtualInput.right = false;
-      }
-    );
-
-    bindHoldButton(
-      'btn-touch-jump',
-      () => {
-        virtualInput.up = true;
-      },
-      () => {
-        virtualInput.up = false;
-      }
-    );
-
-    bindHoldButton(
-      'btn-touch-jump-left',
-      () => {
-        virtualInput.left = true;
-        virtualInput.up = true;
-      },
-      () => {
-        virtualInput.left = false;
-        virtualInput.up = false;
-      }
-    );
-
-    bindHoldButton(
-      'btn-touch-jump-right',
-      () => {
-        virtualInput.right = true;
-        virtualInput.up = true;
-      },
-      () => {
-        virtualInput.right = false;
-        virtualInput.up = false;
-      }
-    );
+      btn.addEventListener('contextmenu', (e) => e.preventDefault());
+    });
   }
 
   updateHUDMathBanner(challenge, isSolved = false) {

@@ -2,7 +2,11 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0b1326" />
   <title>Ritmik Sayma Macerası — Sayıları öğren, yıldızları topla, bayrağa ulaş!</title>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
@@ -11,7 +15,7 @@
     <!-- Phaser 3 Canvas Container -->
     <div id="game-container"></div>
 
-    <!-- Top Floating Quick Bar (Always accessible for Audio & Reduced Motion) -->
+    <!-- Top Floating Quick Bar (Always accessible for Audio, Motion & Fullscreen) -->
     <div id="top-utility-bar" class="utility-bar">
       <button id="btn-toggle-sound" class="pill-btn utility-btn" title="Sesi Aç / Kapat" aria-label="Sesi Aç veya Kapat">
         <span id="sound-icon" class="icon-svg">🔊</span>
@@ -23,6 +27,9 @@
       </button>
       <button id="btn-toggle-motion" class="pill-btn utility-btn" title="Azaltılmış Hareket Modu" aria-label="Azaltılmış Hareket Modu">
         <span id="motion-label">Efektler: Normal</span>
+      </button>
+      <button id="btn-toggle-fullscreen" class="pill-btn utility-btn" title="Tam Ekran" aria-label="Tam Ekran">
+        <span id="fullscreen-label">⛶ Tam Ekran</span>
       </button>
     </div>
 
